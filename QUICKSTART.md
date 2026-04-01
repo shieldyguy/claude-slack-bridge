@@ -1,45 +1,43 @@
 # Slack Bridge Quickstart
 
-## Start the bridge (once per reboot, or after killing it)
+## First time / after reboot
 
 ```bash
-cd ~/Desktop/shieldy/MCP/claude-slack-bridge
-./start-bridge.sh
+slack-bridge start                    # start the daemon
+tmux new -s claude                    # start a tmux session
+claude --dangerously-skip-permissions # start Claude inside it
 ```
 
-## Start Claude in tmux
+That's it. Three commands.
+
+## The `slack-bridge` command
 
 ```bash
-tmux new -s claude
-claude --dangerously-skip-permissions
+slack-bridge start     # start the daemon
+slack-bridge stop      # stop the daemon
+slack-bridge restart   # stop + start (after code changes)
+slack-bridge status    # check daemon, API, and tmux
+slack-bridge logs      # tail the daemon log
 ```
 
-## Reattach to an existing tmux session
+## tmux basics
 
 ```bash
-tmux attach -t claude
+tmux new -s claude       # create a new session named "claude"
+tmux attach -t claude    # reattach to an existing session
+tmux kill-session -t claude  # kill the session (stops Claude)
 ```
 
-## Detach from tmux (leave Claude running)
+**Detach from tmux:** Press `Ctrl+B` then `D`
 
-Press `Ctrl+B` then `D`
+This disconnects your terminal but leaves Claude running in the background.
 
-## Check if the bridge is running
+## The magic: Claude survives without a terminal
 
-```bash
-curl http://127.0.0.1:3271/health
-```
+When you detach from tmux (or close the terminal entirely), both the daemon and Claude keep running. You can:
 
-## Stop the bridge
+- Close every terminal window
+- Close your laptop lid (as long as it doesn't sleep)
+- Walk away and use Slack from your phone
 
-```bash
-kill $(cat ~/Desktop/shieldy/MCP/claude-slack-bridge/bridge.pid)
-```
-
-## Restart the bridge (after code changes)
-
-```bash
-kill $(cat ~/Desktop/shieldy/MCP/claude-slack-bridge/bridge.pid)
-cd ~/Desktop/shieldy/MCP/claude-slack-bridge
-./start-bridge.sh
-```
+Claude is still alive, still connected to hardware, still responding to Slack messages. The only things that kill it are: reboot, `tmux kill-session -t claude`, or exiting Claude inside the session.
