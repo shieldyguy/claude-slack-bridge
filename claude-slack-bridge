@@ -11,14 +11,12 @@ case "${1:-help}" in
   start)
     # Start daemon
     "$BRIDGE_DIR/start-bridge.sh"
-    # Start tmux session if not already running
+    # Drop into tmux session
     if tmux has-session -t "$TMUX_SESSION" 2>/dev/null; then
-      echo "tmux session '$TMUX_SESSION' already exists."
+      tmux attach -t "$TMUX_SESSION"
     else
-      tmux new-session -d -s "$TMUX_SESSION"
-      echo "tmux session '$TMUX_SESSION' ready."
+      tmux new-session -s "$TMUX_SESSION"
     fi
-    echo "  Attach: tmux attach -t $TMUX_SESSION"
     ;;
   stop)
     # Kill tmux session
