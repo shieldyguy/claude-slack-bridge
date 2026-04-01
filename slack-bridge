@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REAL_SCRIPT="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
+BRIDGE_DIR="$(cd "$(dirname "$REAL_SCRIPT")" && pwd)"
+PID_FILE="$BRIDGE_DIR/bridge.pid"
+
+case "${1:-help}" in
+  start)
+    "$BRIDGE_DIR/start-bridge.sh"
+    ;;
+  stop)
+    if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
+      kill "$(cat "$PID_FILE")"
+      rm -f "$PID_FILE"
+      echo "Bridge stopped."
+    else
+      echo "Bridge is not running."
+    fi
+    ;;
+  restart)
+    "$0" stop
+    sleep 1
+    "$0" start
+    ;;
+  status)
+    # Daemon
+    if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
+      echo "Daemon:  running (PID $(cat "$PID_FILE"))"
+    else
+      echo "Daemon:  stopped"
+    fi
+    # Health
+    if curl -s http://127.0.0.1:${BRIDGE_PORT:-3271}/health > /dev/null 2>&1; then
+      echo "API:     healthy"
+    else
+      echo "API:     unreachable"
+    fi
+    # tmux
+    if tmux has-session -t "${TMUX_SESSION:-claude}" 2>/dev/null; then
+      echo "tmux:    session '${TMUX_SESSION:-claude}' alive"
+    else
+      echo "tmux:    no session '${TMUX_SESSION:-claude}'"
+    fi
+    ;;
+  log|logs)
+    tail -f "$BRIDGE_DIR/bridge.log"
+    ;;
+  *)
+    echo "Usage: slack-bridge {start|stop|restart|status|logs}"
+    ;;
+esac
