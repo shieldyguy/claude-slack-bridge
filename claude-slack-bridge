@@ -26,10 +26,20 @@ case "${1:-help}" in
     else
       echo "No tmux session '$TMUX_SESSION'."
     fi
-    # Kill daemon
+    # Kill daemon — try PID file first, then hunt for the process
+    KILLED=false
     if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
       kill "$(cat "$PID_FILE")"
-      rm -f "$PID_FILE"
+      KILLED=true
+    fi
+    rm -f "$PID_FILE"
+    # Catch any orphaned daemon process
+    ORPHAN=$(pgrep -f "node.*claude-slack-bridge.*daemon.js" 2>/dev/null || true)
+    if [ -n "$ORPHAN" ]; then
+      kill $ORPHAN 2>/dev/null || true
+      KILLED=true
+    fi
+    if [ "$KILLED" = true ]; then
       echo "Daemon stopped."
     else
       echo "Daemon not running."
