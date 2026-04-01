@@ -3,21 +3,21 @@
 ## First time / after reboot
 
 ```bash
-slack-bridge start                    # start the daemon
+claude-slack-bridge start                    # start the daemon
 tmux new -s claude                    # start a tmux session
 claude --dangerously-skip-permissions # start Claude inside it
 ```
 
 That's it. Three commands.
 
-## The `slack-bridge` command
+## The `claude-slack-bridge` command
 
 ```bash
-slack-bridge start     # start the daemon
-slack-bridge stop      # stop the daemon
-slack-bridge restart   # stop + start (after code changes)
-slack-bridge status    # check daemon, API, and tmux
-slack-bridge logs      # tail the daemon log
+claude-slack-bridge start     # start the daemon
+claude-slack-bridge stop      # stop the daemon
+claude-slack-bridge restart   # stop + start (after code changes)
+claude-slack-bridge status    # check daemon, API, and tmux
+claude-slack-bridge logs      # tail the daemon log
 ```
 
 ## tmux basics
