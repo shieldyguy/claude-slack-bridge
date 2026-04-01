@@ -18,7 +18,7 @@ case "${1:-help}" in
       tmux new-session -d -s "$TMUX_SESSION"
       echo "tmux session '$TMUX_SESSION' ready."
     fi
-    echo "  Attach: claude-slack-bridge attach"
+    echo "  Attach: tmux attach -t $TMUX_SESSION"
     ;;
   stop)
     # Kill tmux session
@@ -42,14 +42,7 @@ case "${1:-help}" in
     sleep 1
     "$0" start
     ;;
-  attach)
-    if tmux has-session -t "$TMUX_SESSION" 2>/dev/null; then
-      tmux attach -t "$TMUX_SESSION"
-    else
-      echo "No tmux session '$TMUX_SESSION'. Run: claude-slack-bridge start"
-    fi
-    ;;
-  status)
+status)
     # Daemon
     if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
       echo "Daemon:  running (PID $(cat "$PID_FILE"))"
@@ -73,6 +66,6 @@ case "${1:-help}" in
     tail -f "$BRIDGE_DIR/bridge.log"
     ;;
   *)
-    echo "Usage: claude-slack-bridge {start|stop|restart|attach|status|logs}"
+    echo "Usage: claude-slack-bridge {start|stop|restart|status|logs}"
     ;;
 esac
