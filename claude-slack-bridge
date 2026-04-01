@@ -5,23 +5,50 @@ REAL_SCRIPT="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo
 BRIDGE_DIR="$(cd "$(dirname "$REAL_SCRIPT")" && pwd)"
 PID_FILE="$BRIDGE_DIR/bridge.pid"
 
+TMUX_SESSION="${TMUX_SESSION:-claude}"
+
 case "${1:-help}" in
   start)
+    # Start daemon
     "$BRIDGE_DIR/start-bridge.sh"
+    # Start tmux session with Claude if not already running
+    if tmux has-session -t "$TMUX_SESSION" 2>/dev/null; then
+      echo "tmux session '$TMUX_SESSION' already exists. Attach with: tmux attach -t $TMUX_SESSION"
+    else
+      tmux new-session -d -s "$TMUX_SESSION" "claude --dangerously-skip-permissions"
+      echo "Claude started in tmux session '$TMUX_SESSION'."
+      echo "  Attach: tmux attach -t $TMUX_SESSION"
+      echo "  Detach: Ctrl+B then D"
+    fi
     ;;
   stop)
+    # Kill tmux session
+    if tmux has-session -t "$TMUX_SESSION" 2>/dev/null; then
+      tmux kill-session -t "$TMUX_SESSION"
+      echo "tmux session '$TMUX_SESSION' killed."
+    else
+      echo "No tmux session '$TMUX_SESSION'."
+    fi
+    # Kill daemon
     if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
       kill "$(cat "$PID_FILE")"
       rm -f "$PID_FILE"
-      echo "Bridge stopped."
+      echo "Daemon stopped."
     else
-      echo "Bridge is not running."
+      echo "Daemon not running."
     fi
     ;;
   restart)
     "$0" stop
     sleep 1
     "$0" start
+    ;;
+  attach)
+    if tmux has-session -t "$TMUX_SESSION" 2>/dev/null; then
+      tmux attach -t "$TMUX_SESSION"
+    else
+      echo "No tmux session '$TMUX_SESSION'. Run: claude-slack-bridge start"
+    fi
     ;;
   status)
     # Daemon
@@ -37,16 +64,16 @@ case "${1:-help}" in
       echo "API:     unreachable"
     fi
     # tmux
-    if tmux has-session -t "${TMUX_SESSION:-claude}" 2>/dev/null; then
-      echo "tmux:    session '${TMUX_SESSION:-claude}' alive"
+    if tmux has-session -t "$TMUX_SESSION" 2>/dev/null; then
+      echo "Claude:  running in tmux '$TMUX_SESSION'"
     else
-      echo "tmux:    no session '${TMUX_SESSION:-claude}'"
+      echo "Claude:  not running"
     fi
     ;;
   log|logs)
     tail -f "$BRIDGE_DIR/bridge.log"
     ;;
   *)
-    echo "Usage: slack-bridge {start|stop|restart|status|logs}"
+    echo "Usage: claude-slack-bridge {start|stop|restart|attach|status|logs}"
     ;;
 esac
