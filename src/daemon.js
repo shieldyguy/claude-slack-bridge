@@ -29,7 +29,12 @@ const app = new App({
 app.event('message', async ({ event }) => {
   if (!shouldForwardMessage(event, CHANNEL_ID)) return;
 
-  const result = await injectMessage(TMUX_SESSION, event.text);
+  // Acknowledge receipt with eyes emoji before injecting
+  try {
+    await app.client.reactions.add({ channel: CHANNEL_ID, timestamp: event.ts, name: 'eyes' });
+  } catch { /* ignore if already reacted */ }
+
+  const result = await injectMessage(TMUX_SESSION, `[slack] ${event.text}`);
 
   if (!result.success) {
     await app.client.chat.postMessage({
